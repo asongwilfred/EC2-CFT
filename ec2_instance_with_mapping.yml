@@ -1,0 +1,50 @@
+---
+Description: Create an EC2 instance by AWS CloudFormation
+Mappings:
+  AmiMap:
+    ServerType01:
+      id: "[Find your ImageId in EC2-->Launch Instance-->Step1]"
+  KeyPair:
+    Key01:
+      key: "[Find your KeyName in EC2-->Key Pairs]"
+Resources:
+  SecurityGroupDemoSvrTraffic:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: sgDemoSvr
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+        Description: For traffic from Internet
+      GroupDescription: Security Group for demo server
+      VpcId: "[Find you VpcId in VPC-->Subnets]"
+  EC2InstanceDemoSvr:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: "[Find you AvailabilityZone in VPC-->Subnets]"
+      BlockDeviceMappings:
+      - DeviceName: "[For Ubuntu Server, default value is /dev/sda1]"
+        Ebs:
+          DeleteOnTermination: 'true'
+          VolumeSize: '8'
+          VolumeType: gp2
+      ImageId:
+        Fn::FindInMap:
+        - AmiMap
+        - ServerType01
+        - id
+      InstanceType: "[Find your InstanceType in EC2-->Launch Instance-->Step2]"
+      KeyName:
+        Fn::FindInMap:
+        - KeyPair
+        - Key01
+        - key
+      NetworkInterfaces:
+      - Description: Primary network interface
+        DeviceIndex: "[For instance type t2.micro, maximum 2 network interfaces. Index would be 0 or 1. Search Google for other instance types.]"
+        SubnetId: "[Find you SubnetId in VPC-->Subnets]"
+        PrivateIpAddress: "[Find subnet in VPC-->Subnets, and IP address would start from 4. 0 to 3 are reserved by AWS.]"
+        GroupSet:
+        - Ref: SecurityGroupDemoSvrTraffic
